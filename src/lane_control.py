@@ -15,36 +15,23 @@ import signal
 
 class PID_control:
 
-    def __init__(self, kp, ki, kd):
+    def __init__(self, kp, ki, kd, speed):
 
         self.Kp = kp
         self.Ki = ki
         self.Kd = kd
+        self.speed = speed
         self.p_error = 0.0
         self.i_error = 0.0
         self.d_error = 0.0
 
-        self.cte = 0
-        self.is_cte = False
-        rate = rospy.Rate(30)
-
         self.pub = rospy.Publisher('xycar_motor', xycar_motor, queue_size=1)
-        self.sub = rospy.Subscriber("/cte", float32, self.cte_callback)
 
-        while not rospy.is_shutdown():
-            if self.is_cte:
-                angle = self.pid_control(self.cte)
-                self.drive(angle, 10)
-                rate.sleep()
-
-    def offset_callback(self, data):
-        self.is_cte = True
-        self.cte = data.data
-
-    def drive(self, Angle, Speed):
+    def drive(self, cte):
+        Angle = self.pid_control(cte)
         msg = xycar_motor()
         msg.angle = Angle
-        msg.speed = Speed
+        msg.speed = self.speed
         self.pub.publish(msg)
 
     def pid_control(self, error):
