@@ -24,6 +24,8 @@ def lane_estimation(image_binary):
     cte, curve = get_mid_poly(image_binary)
     return cte,curve
 
+def get_angle_between_lines(intersect, point1, point2):
+    return math.atan2((point2[1]-intersect[1])/ (point2[0]-intersect[0])) - atan2((point1[1]-intersect[1])/ (point1[0]-intersect[0]))
 
 def get_mid_poly(img):
     global nwindows
@@ -83,12 +85,12 @@ def get_mid_poly(img):
 
     #left_fit = np.polyfit(nz[0][left_lane_inds], nz[1][left_lane_inds], 2)
     #right_fit = np.polyfit(nz[0][right_lane_inds] , nz[1][right_lane_inds], 2)
-
-    mfit = np.polyfit(np.array(my), np.array(mx),2)
-    cte = mx[nwindows//2]/2-(Width/2)
+    midindex = nwindows//2
+    cte = mx[midindex]/2-(Width/2)
+    curve = get_angle_between_lines((mx[midindex],my[midindex]),(mx[midindex-1],my[midindex-1]),(mx[midindex+1],my[midindex+1]))
 
     out_img[nz[0][left_lane_inds], nz[1][left_lane_inds]] = [255, 0, 0]
     out_img[nz[0][right_lane_inds] , nz[1][right_lane_inds]] = [0, 0, 255]
     cv2.imshow("viewer", out_img)
     
-    return cte, mfit
+    return cte, curve
