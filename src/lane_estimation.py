@@ -40,7 +40,7 @@ def get_mid_poly(img):
     leftx_current = np.argmax(histogram[:midpoint])
     rightx_current = np.argmax(histogram[midpoint:]) + midpoint
 
-    # left/right lane이 보이지 않을때도 고려해야함
+    # todo : left/right lane이 보이지 않을때도 고려해야함
 
     window_height = np.int(lane.shape[0]/nwindows)
     nz = lane.nonzero()
@@ -48,7 +48,7 @@ def get_mid_poly(img):
     left_lane_inds = []
     right_lane_inds = []
     
-    lx, ly, rx, ry, mx, my= [], [], [], [], [], []
+    mx, my= [], []
 
     out_img = np.dstack((lane, lane, lane))*255
 
@@ -62,9 +62,6 @@ def get_mid_poly(img):
         win_xrl = rightx_current - margin
         win_xrh = rightx_current + margin
 
-        cv2.rectangle(out_img,(win_xll,win_yl),(win_xlh,win_yh),(0,255,0), 2) 
-        cv2.rectangle(out_img,(win_xrl,win_yl),(win_xrh,win_yh),(0,255,0), 2) 
-
         good_left_inds = ((nz[0] >= win_yl)&(nz[0] < win_yh)&(nz[1] >= win_xll)&(nz[1] < win_xlh)).nonzero()[0]
         good_right_inds = ((nz[0] >= win_yl)&(nz[0] < win_yh)&(nz[1] >= win_xrl)&(nz[1] < win_xrh)).nonzero()[0]
 
@@ -75,12 +72,6 @@ def get_mid_poly(img):
             leftx_current = np.int(np.mean(nz[1][good_left_inds]))
         if len(good_right_inds) > minpix:        
             rightx_current = np.int(np.mean(nz[1][good_right_inds]))
-
-        lx.append(leftx_current)
-        ly.append((win_yl + win_yh)/2)
-
-        rx.append(rightx_current)
-        ry.append((win_yl + win_yh)/2)
 
         mx.append((leftx_current+rightx_current)/2)
         my.append((win_yl + win_yh)/2)
