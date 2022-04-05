@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="rosbag" type="play" name="player" output="screen" args="--clock /home/killywonka/xycar_ws/src/xycar_lkas/src/cam_topic.bag"/>
+    <node name="xycar_lkas" output="screen" pkg="xycar_lkas" type="lkas_main.py" />
+</launch>
