@@ -3,8 +3,7 @@
 import rospy, rospkg
 import numpy as np
 import cv2, random, math
-import cv_bridge import CvBridge
-from std_msgs.msg import float32
+from cv_bridge import CvBridge
 from geometry_msgs.msg import Point
 from xycar_msgs.msg import xycar_motor
 from math import atan2, sin, cos
@@ -51,7 +50,7 @@ class Pure_pursuit:
         rate = rospy.Rate(30)
 
         self.pub = rospy.Publisher('xycar_motor', xycar_motor, queue_size=1)
-        self.sub = rospy.Subscriber("/offset", float32, self.offset_callback)
+        self.sub = rospy.Subscriber("/offset", Float32, self.offset_callback)
 
         while not rospy.is_shutdown():
             if is_offset:
@@ -82,4 +81,3 @@ class Pure_pursuit:
 
 
 
-pid = PID_control(0.5, 0.0005, 0.05)
