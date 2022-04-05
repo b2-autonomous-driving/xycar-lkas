@@ -2,11 +2,9 @@
 
 import rospy, rospkg
 import numpy as np
-import cv2, random, math
-from cv_bridge import CvBridge
 from geometry_msgs.msg import Point
 from xycar_msgs.msg import xycar_motor
-from math import atan2, sin, cos
+from math import atan2, sin
 
 import sys
 import os
