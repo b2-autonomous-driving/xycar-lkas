@@ -69,6 +69,8 @@ class lanedetection:
             "gaussian_adaptive_dilate" : self.gaussian_adaptive_dilate,
             "test" : self.bin_test,
         }
+        self.mask = np.ones((480,640))
+        self.mask[400:480, 260:380]=0
 
     def load_calib(self):
         if os.path.isfile(self.calib_path):
@@ -86,9 +88,10 @@ class lanedetection:
         
     def gaussian_canny(self):
         img = self.gray
-        offset = cv2.getTrackbarPos("br","img")
+        # offset = cv2.getTrackbarPos("br","img")
+        offset=-120
         img = cv2.add(img, offset)
-        cv2.imshow("img", img)
+        # cv2.imshow("img", img)
         
         # blur
         kernel_size = 5
@@ -98,12 +101,12 @@ class lanedetection:
         low_threshold = 60
         high_threshold = 70
         edge_img = cv2.Canny(np.uint8(blur_gray), low_threshold, high_threshold)
-        cv2.imshow("edge_img", edge_img)
+        # cv2.imshow("edge_img", edge_img)
         cv2.waitKey(1)
         return edge_img
 
     def gaussian_otsu(self):
-        img = self.gray
+        img=self.gray
         offset = cv2.getTrackbarPos("br","img")
         img = cv2.add(img, offset)
 
@@ -130,7 +133,7 @@ class lanedetection:
         return th_mean
 
     def gaussian_adaptive_dilate(self):
-        img = self.gray
+        img = cv2.copyTo(self.gray, self.mask)
         offset = cv2.getTrackbarPos("br","img")
         img = cv2.add(img, offset)
         cv2.imshow("img", img)
@@ -162,7 +165,7 @@ class lanedetection:
     def run(self, image):
         # undistort image
         if image is not None:
-            image = cv2.undistort(image, self.mtx, self.dist, None, self.mtx)
+            # image = cv2.undistort(image, self.mtx, self.dist, None, self.mtx)
             self.gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             return self.mode_dict[self.mode]()
         return None

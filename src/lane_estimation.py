@@ -21,7 +21,7 @@ minpix = 5
 lane_bin_th = 145
 
 Width = 640
-Height = 480
+Height = 400
 
 warp_img_w = 320
 warp_img_h = 240
@@ -42,12 +42,18 @@ warp_dist = np.array([
 
 
 def lane_estimation(image_binary):
-    birdview_img = warp_image(image_binary, warp_src, warp_dist, (warp_img_w, warp_img_h))
-    cte, curve = get_mid_poly(birdview_img)
-    return cte,curve
+    if image_binary is not None:
+        image_binary = image_binary[:400,:640]
+        cv2.imshow("ib", image_binary)
+        #mask = np.zeros_like(image_binary)
+        #cv2.rectangle(mask, (400,0), (480,640),(255,255,255),2)
+        #cv2.copyTo(image_binary,mask,image_binary)
+        birdview_img, M, minv = warp_image(image_binary, warp_src, warp_dist, (warp_img_w, warp_img_h))
+        cte, curve = get_mid_poly(birdview_img)
+        return cte,curve
 
 def get_angle_between_lines(intersect, point1, point2):
-    return math.atan2((point2[1]-intersect[1])/ (point2[0]-intersect[0])) - math.atan2((point1[1]-intersect[1])/ (point1[0]-intersect[0]))
+    return math.atan2((point2[1]-intersect[1]), (point2[0]-intersect[0])) - math.atan2((point1[1]-intersect[1]), (point1[0]-intersect[0]))
 
 def warp_image(img, src, dst, size):
     M = cv2.getPerspectiveTransform(src, dst)
@@ -56,15 +62,11 @@ def warp_image(img, src, dst, size):
 
     return warp_img, M, Minv
 
-def get_mid_poly(img):
+def get_mid_poly(lane):
     global nwindows
     global margin
     global minpix
     global lane_bin_th
-
-    blur = cv2.GaussianBlur(img,(5, 5), 0)
-    _, L, _ = cv2.split(cv2.cvtColor(blur, cv2.COLOR_BGR2HLS))
-    _, lane = cv2.threshold(L, lane_bin_th, 255, cv2.THRESH_BINARY)
 
     histogram = np.sum(lane[lane.shape[0]//2:,:], axis=0)      
     midpoint = np.int(histogram.shape[0]/2)
@@ -93,6 +95,9 @@ def get_mid_poly(img):
         win_xrl = rightx_current - margin
         win_xrh = rightx_current + margin
 
+        #cv2.rectangle(out_img, (win_xll, win_yl), (win_xlh, win_yh), (0,255,0),2)
+        #v2.rectangle(out_img, (win_xrl, win_yl), (win_xrh, win_yh), (0,255,0),2)
+
         good_left_inds = ((nz[0] >= win_yl)&(nz[0] < win_yh)&(nz[1] >= win_xll)&(nz[1] < win_xlh)).nonzero()[0]
         good_right_inds = ((nz[0] >= win_yl)&(nz[0] < win_yh)&(nz[1] >= win_xrl)&(nz[1] < win_xrh)).nonzero()[0]
 
@@ -103,7 +108,7 @@ def get_mid_poly(img):
             leftx_current = np.int(np.mean(nz[1][good_left_inds]))
         if len(good_right_inds) > minpix:        
             rightx_current = np.int(np.mean(nz[1][good_right_inds]))
-
+	
         mx.append((leftx_current+rightx_current)/2)
         my.append((win_yl + win_yh)/2)
 
@@ -113,11 +118,14 @@ def get_mid_poly(img):
     right_lane_inds = np.concatenate(right_lane_inds)
 
     midindex = nwindows//2
-    cte = mx[midindex]-(Width/2)
-    curve = get_angle_between_lines((mx[midindex],my[midindex]),(mx[midindex-1],my[midindex-1]),(mx[midindex+1],my[midindex+1]))
+    cte = mx[midindex]-(warp_img_w/2)
+    #curve = get_angle_between_lines((mx[midindex],my[midindex]),(mx[midindex-1],my[midindex-1]),(mx[midindex+1],my[midindex+1]))
 
     out_img[nz[0][left_lane_inds], nz[1][left_lane_inds]] = [255, 0, 0]
     out_img[nz[0][right_lane_inds] , nz[1][right_lane_inds]] = [0, 0, 255]
+    center_x, center_y, r = mx[midindex], my[midindex], 5
+    cv2.circle(out_img, (int(center_x), int(center_y)), r, (255,0,0), 2) 
     cv2.imshow("viewer", out_img)
+
     
-    return cte, curve
+    return cte, 0
