@@ -9,8 +9,10 @@ from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import Imu
 
+
 import lane_control, lane_detection, lane_estimation
 from lane_control import PID_control
+
 
 
 import sys
@@ -43,11 +45,11 @@ class lkas:
         
     def run(self):
 
-
         while self.image is not None:
             image_binary = lane_detection.lanedetection().run(self.image)
             cte, curve = lane_estimation(image_binary)
-            self.pid.drive(cte) 
+            control_cmd = lane_control(cte, curve)
+
         rospy.spin()
 
 
