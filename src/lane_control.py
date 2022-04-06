@@ -40,42 +40,28 @@ class PID_control:
 
 class Pure_pursuit:
 
-    def __init__(self):
+    def __init__(self, lfd, x_ratio, y_ratio):
 
-        self.lfd = 3
-        self.point = Point()
-        self.is_point = False
-        rate = rospy.Rate(30)
+        self.lfd = lfd
+        self.x_ratio = x_ratio
+        self.y_ratio = y_ratio
 
         self.pub = rospy.Publisher('xycar_motor', xycar_motor, queue_size=1)
-        self.sub = rospy.Subscriber("/offset", Float32, self.offset_callback)
 
-        while not rospy.is_shutdown():
-            if is_offset:
-                points = self.points_to_path(self.point)
-                theta = atan2(points[0], points[1])
-                steering = -atan2((2*sin(theta)), self.lfd)
-                self.drive(steering, 10)
-                rate.sleep()
+    def drive(self, cte, Speed):
 
-    def point_callback(self, data):
-        self.is_point = True
-        self.point.x = data.x
-        self.point.y = data.y
-        self.point.z = 0
+        x = cte/self.x_ratio
+        y = 240/self.y_ratio
 
-    def drive(self, Angle, Speed):
+        theta = atan2(x, y)
+        Angle = -atan2((2*sin(theta)), self.lfd)
+
         msg = xycar_motor()
         msg.angle = Angle
         msg.speed = Speed
         self.pub.publish(msg)
 
-    def points_to_path(self, points):
-        point = [0,0]
-        point[0] = (points.x - 320)*2.5/420
-        point[1] = points.y*5/400 + 2
-
-        return point
+        
 
 
 
