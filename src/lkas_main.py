@@ -16,7 +16,7 @@ import lane_control
 import sys
 import os
 import signal
-# from tf.transformations import euler_from_quaternion
+from tf.transformations import euler_from_quaternion
 
 def signal_handler(sig, frame):
     os.system('killall -9 python rosout')
@@ -37,11 +37,16 @@ class lkas:
 
     def imu_callback(self, data):
         self.imu = [data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w] 
-        # self.rpy = euler_from_quaternion(self.imu)
+        self.rpy = euler_from_quaternion(self.imu)
         
     def run(self):
-        while self.image is not None:
-            image_binary = lane_detection.lanedetection().run(self.image)
+        def nothing():
+            pass
+        cv2.namedWindow("img")
+        cv2.createTrackbar("br", "img", 0, 200, nothing)
+        cv2.setTrackbarMin("br", "img", -200)
+        while True:
+            image_binary = lane_detection.lanedetection("gaussian_otsu").run(self.image)
             cte, curve = lane_estimation(image_binary)
             control_cmd = lane_control(cte, curve)
         rospy.spin()
