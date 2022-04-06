@@ -12,6 +12,9 @@ from sensor_msgs.msg import Imu
 warpx_margin = 20
 warpy_margin = 3
 
+warpx_margin = 20
+warpy_margin = 3
+
 nwindows = 9
 margin = 12
 minpix = 5
@@ -20,12 +23,35 @@ lane_bin_th = 145
 Width = 640
 Height = 480
 
+warp_src  = np.array([
+    [230-warpx_margin, 300-warpy_margin],  
+    [45-warpx_margin,  450+warpy_margin],
+    [445+warpx_margin, 300-warpy_margin],
+    [610+warpx_margin, 450+warpy_margin]
+], dtype=np.float32)
+
+warp_dist = np.array([
+    [0,0],
+    [0,warp_img_h],
+    [warp_img_w,0],
+    [warp_img_w, warp_img_h]
+], dtype=np.float32)
+
+
 def lane_estimation(image_binary):
-    cte, curve = get_mid_poly(image_binary)
+    birdview_img = warp_image(image_binary, warp_src, warp_dist, (warp_img_w, warp_img_h))
+    cte, curve = get_mid_poly(birdview_img)
     return cte,curve
 
 def get_angle_between_lines(intersect, point1, point2):
     return math.atan2((point2[1]-intersect[1])/ (point2[0]-intersect[0])) - math.atan2((point1[1]-intersect[1])/ (point1[0]-intersect[0]))
+
+def warp_image(img, src, dst, size):
+    M = cv2.getPerspectiveTransform(src, dst)
+    Minv = cv2.getPerspectiveTransform(dst, src)
+    warp_img = cv2.warpPerspective(img, M, size, flags=cv2.INTER_LINEAR)
+
+    return warp_img, M, Minv
 
 def get_mid_poly(img):
     global nwindows
