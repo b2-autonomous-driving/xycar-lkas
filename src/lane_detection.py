@@ -106,9 +106,11 @@ class lanedetection:
         img = self.gray
         offset = cv2.getTrackbarPos("br","img")
         img = cv2.add(img, offset)
+
         cv2.imshow("img", img)
         img=cv2.GaussianBlur(img,(5,5),0)
         _, th = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        th=cv2.subtract(255,th)
         cv2.imshow("otsu",th)
         cv2.waitKey(1)
         return th
