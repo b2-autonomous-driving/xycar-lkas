@@ -23,6 +23,9 @@ lane_bin_th = 145
 Width = 640
 Height = 480
 
+warp_img_w = 320
+warp_img_h = 240
+
 warp_src  = np.array([
     [230-warpx_margin, 300-warpy_margin],  
     [45-warpx_margin,  450+warpy_margin],
