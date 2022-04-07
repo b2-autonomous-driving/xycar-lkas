@@ -73,6 +73,7 @@ class lanedetection:
             "gaussian_adaptive_dilate": self.gaussian_adaptive_dilate,
             "test": self.bin_test,
         }
+
         self.calc_bev_mat()
 
     def calc_bev_mat(self):
@@ -103,6 +104,7 @@ class lanedetection:
         # calc bev_mtx
         self.bev_mtx = cv2.getPerspectiveTransform(pts1, pts2)
 
+
     def load_calib(self):
         if os.path.isfile(self.calib_path):
             calib_data = np.load(self.calib_path)
@@ -120,6 +122,7 @@ class lanedetection:
             self.dist = np.array([-0.289296, 0.061035, 0.001786, 0.015238, 0.0])
 
     def gaussian_canny(self, img):
+
         # blur
         blur = cv2.GaussianBlur(img, (5, 5), 0)
 
@@ -137,6 +140,7 @@ class lanedetection:
     def gaussian_otsu(self, img):
         # gaussian blur
         blur = cv2.GaussianBlur(img, (5, 5), 0)
+
 
         # otsu threshold
         _, th = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
@@ -159,8 +163,8 @@ class lanedetection:
         # dilation
         kernel = np.ones((3, 3), np.uint8)
         dilation = cv2.dilate(th_mean, kernel, iterations=2)
-
         # show result
+
         cv2.imshow("img", img)
         cv2.imshow("mean", th_mean)
         cv2.imshow("dilation", dilation)
@@ -249,3 +253,4 @@ if __name__ == "__main__":
     bev = ld.bev(th)
     cv2.imshow("bev", bev)
     cv2.waitKey(-1)
+
