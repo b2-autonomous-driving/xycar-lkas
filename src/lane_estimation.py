@@ -91,4 +91,5 @@ def get_mid_poly(img):
     out_img[nz[0][right_lane_inds] , nz[1][right_lane_inds]] = [0, 0, 255]
     cv2.imshow("viewer", out_img)
     
+    
     return cte, mfit
