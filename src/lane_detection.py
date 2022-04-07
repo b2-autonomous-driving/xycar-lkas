@@ -62,7 +62,7 @@ class undistort:
 
 
 class lanedetection:
-    def __init__(self, mode="gaussian_otsu"):
+    def __init__(self, mode="gaussian_otsu", b_show=False):
         self.calib_path = "./calib.npz"
         self.load_calib()
         self.mode = mode
@@ -73,7 +73,7 @@ class lanedetection:
             "gaussian_adaptive_dilate": self.gaussian_adaptive_dilate,
             "test": self.bin_test,
         }
-
+        self.b_show = b_show
         self.calc_bev_mat()
 
     def calc_bev_mat(self):
@@ -104,7 +104,6 @@ class lanedetection:
         # calc bev_mtx
         self.bev_mtx = cv2.getPerspectiveTransform(pts1, pts2)
 
-
     def load_calib(self):
         if os.path.isfile(self.calib_path):
             calib_data = np.load(self.calib_path)
@@ -132,8 +131,9 @@ class lanedetection:
         edge_img = cv2.Canny(np.uint8(blur), low_threshold, high_threshold)
 
         # show result
-        cv2.imshow("img", img)
-        cv2.imshow("edge_img", edge_img)
+        if self.b_show:
+            cv2.imshow("img", img)
+            cv2.imshow("edge_img", edge_img)
 
         return edge_img
 
@@ -141,13 +141,13 @@ class lanedetection:
         # gaussian blur
         blur = cv2.GaussianBlur(img, (5, 5), 0)
 
-
         # otsu threshold
         _, th = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
         # show result
-        cv2.imshow("img", img)
-        cv2.imshow("otsu", th)
+        if self.b_show:
+            cv2.imshow("img", img)
+            cv2.imshow("otsu", th)
 
         return th
 
@@ -164,10 +164,10 @@ class lanedetection:
         kernel = np.ones((3, 3), np.uint8)
         dilation = cv2.dilate(th_mean, kernel, iterations=2)
         # show result
-
-        cv2.imshow("img", img)
-        cv2.imshow("mean", th_mean)
-        cv2.imshow("dilation", dilation)
+        if self.b_show:
+            cv2.imshow("img", img)
+            cv2.imshow("mean", th_mean)
+            cv2.imshow("dilation", dilation)
 
         return th_mean
 
@@ -185,9 +185,10 @@ class lanedetection:
         dilation = cv2.dilate(th_gaussian, kernel, iterations=1)
 
         # show result
-        cv2.imshow("img", img)
-        cv2.imshow("mean", th_gaussian)
-        cv2.imshow("dilation", dilation)
+        if self.b_show:
+            cv2.imshow("img", img)
+            cv2.imshow("mean", th_gaussian)
+            cv2.imshow("dilation", dilation)
 
         return th_gaussian
 
@@ -205,16 +206,17 @@ class lanedetection:
         _, th_otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
         # show results
-        cv2.imshow("img", img)
-        cv2.imshow("mean", th_mean)
-        cv2.imshow("gaussian", th_gaussian)
-        cv2.imshow("otsu", th_otsu)
+        if self.b_show:
+            cv2.imshow("img", img)
+            cv2.imshow("mean", th_mean)
+            cv2.imshow("gaussian", th_gaussian)
+            cv2.imshow("otsu", th_otsu)
 
         return None
 
     def bev(self, th):
         # remove lidar sensor
-        cv2.circle(th, (320, 480), 110, 0, -1)
+        # cv2.circle(th, (320, 480), 110, 0, -1)
 
         # return warp
         return cv2.warpPerspective(th, self.bev_mtx, (500, 250))
@@ -225,11 +227,11 @@ class lanedetection:
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
             # undistort image
-            gray = cv2.undistort(gray, self.mtx, self.dist, None, self.mtx)
+            # gray = cv2.undistort(gray, self.mtx, self.dist, None, self.mtx)
 
             # add/subtrack gray intensity
-            offset = -100
-            gray = cv2.add(gray, offset)
+            # offset = -100
+            # gray = cv2.add(gray, offset)
 
             # calc binary image
             bin_gray = self.mode_dict[self.mode](gray)
@@ -248,9 +250,27 @@ if __name__ == "__main__":
     ld = lanedetection(mode="gaussian_otsu")
     img = cv2.imread("/home/killywonka/xycar_ws/src/xycar_lkas/src/test.jpg")
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    th = ld.gaussian_otsu(gray)
-
+    th = ld.gaussian_canny(gray)
     bev = ld.bev(th)
     cv2.imshow("bev", bev)
-    cv2.waitKey(-1)
+    bev_3c = cv2.merge([bev, bev, bev])
+    minLineLength = 200
+    maxLineGap = 0
 
+    lines = cv2.HoughLinesP(bev, 1, np.pi / 360, 100, minLineLength, maxLineGap)
+    for i in range(len(lines)):
+        for x1, y1, x2, y2 in lines[i]:
+            print(x1, y1, x2, y2)
+            cv2.line(
+                bev_3c,
+                (x1, y1),
+                (x2, y2),
+                (
+                    255,
+                    0,
+                ),
+                3,
+            )
+    cv2.imshow("bev_3c", bev_3c)
+
+    cv2.waitKey(-1)
