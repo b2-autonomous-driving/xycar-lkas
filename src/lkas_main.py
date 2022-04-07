@@ -13,8 +13,8 @@ from sensor_msgs.msg import Imu
 
 
 from lane_detection import lanedetection
-from lane_estimation import lane_estimation
 from lane_control import PID_control
+from lane_estimation import estimation
 
 import sys
 import os
@@ -41,6 +41,7 @@ class lkas:
         self.imu_sub = rospy.Subscriber("imu", Imu, self.imu_callback)
         self.pid = PID_control(0.5, 0.0, 0.05, 5)
         self.rate = rospy.Rate(30)
+        self.est = estimation()
 
     def img_callback(self, data):
         self.image = self.bridge.imgmsg_to_cv2(data, "bgr8")
@@ -57,7 +58,7 @@ class lkas:
     def run(self):
         while not rospy.is_shutdown():
             image_binary = lanedetection()(self.image)
-            cte, curve = lane_estimation(image_binary)
+            cte = self.est(image_binary, False, False)
             self.pid.drive(cte)
         self.rate.sleep()
 
