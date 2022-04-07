@@ -65,7 +65,3 @@ class estimation:
             cv2.imshow("gray", img)
 
         return -(250 - self.mid)
-        
-        
-
-
