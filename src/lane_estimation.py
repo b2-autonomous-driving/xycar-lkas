@@ -66,5 +66,6 @@ class estimation:
 
         return -(250 - self.mid)
         
+        
 
 
