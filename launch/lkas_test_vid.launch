@@ -1,0 +1,4 @@
+<launch>
+    <node name="video_reader" output="screen" pkg="xycar_lkas" type="video_reader.py" />
+    <node name="xycar_lkas" output="screen" pkg="xycar_lkas" type="lkas_main.py" />
+</launch>
