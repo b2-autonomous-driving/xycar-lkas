@@ -11,7 +11,6 @@ from xycar_msgs.msg import xycar_motor
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import Imu
 
-
 from lane_detection import lanedetection
 from lane_control import PID_control
 from lane_estimation import estimation
@@ -58,7 +57,7 @@ class lkas:
     def run(self):
         while not rospy.is_shutdown():
             image_binary = lanedetection()(self.image)
-            cte = self.est(image_binary, False, False)
+            cte = self.est(image_binary)
             self.pid.drive(cte)
         self.rate.sleep()
 
