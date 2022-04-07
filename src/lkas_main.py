@@ -38,7 +38,7 @@ class lkas:
             "/usb_cam/image_raw", Image, self.img_callback
         )
         self.imu_sub = rospy.Subscriber("imu", Imu, self.imu_callback)
-        self.pid = PID_control(0.5, 0.0, 0.05, 5)
+        self.pid = PID_control(0.5, 0.0, 0.05, 20)
         self.rate = rospy.Rate(30)
         self.est = estimation()
 
@@ -56,10 +56,11 @@ class lkas:
 
     def run(self):
         while not rospy.is_shutdown():
-            image_binary = lanedetection()(self.image)
-            cte = self.est(image_binary)
-            self.pid.drive(cte)
-        self.rate.sleep()
+            if self.image is not None:
+                image_binary = lanedetection()(self.image)
+                cte = self.est(image_binary)
+                self.pid.drive(cte)
+            self.rate.sleep()
 
 
 if __name__ == "__main__":
