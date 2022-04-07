@@ -18,17 +18,19 @@ class PID_control:
         self.Ki = ki
         self.Kd = kd
         self.speed = speed
+        self.striaghtSpeed = speed
         self.p_error = 0.0
         self.i_error = 0.0
         self.d_error = 0.0
 
         self.pub = rospy.Publisher('xycar_motor', xycar_motor, queue_size=1)
+    
 
     def drive(self, cte):
         Angle = self.pid_control(cte)
         msg = xycar_motor()
         msg.angle = Angle
-        msg.speed = self.speed
+        msg.speed = self.striaghtSpeed if Angle < abs(30) else 5
         self.pub.publish(msg)
 
     def pid_control(self, error):
@@ -38,36 +40,42 @@ class PID_control:
 
         return self.Kp*self.p_error + self.Ki*self.i_error + self.Kd*self.d_error
 
-class Pure_pursuit:
+# class Pure_pursuit:
 
-    def __init__(self, lfd, x_ratio, y_ratio):
+#     def __init__(self, lfd, x_ratio, y_ratio):
 
-        self.lfd = lfd
-	self.x_ratio = x_ratio
-	self.y_ratio = y_ratio
+#         self.lfd = lfd
+#         self.x_ratio = x_ratio
+#         self.y_ratio = y_ratio
 
-        self.pub = rospy.Publisher('xycar_motor', xycar_motor, queue_size=1)
+#         self.pub = rospy.Publisher('xycar_motor', xycar_motor, queue_size=1)
 
 
-        while not rospy.is_shutdown():
-            if is_offset:
-                points = self.points_to_path(self.point)
+#         while not rospy.is_shutdown():
+#             if is_offset:
+#                 points = self.points_to_path(self.point)
                 
-                self.drive(steering, 10)
-                rate.sleep()
+#                 self.drive(steering, 10)
+#                 rate.sleep()
 
-    def drive(self, cte, Speed):
+#     def adjust_values(pid, angle):
+#         if angle> 30 or angle < -30: 
+#             pid.speed = 5
+#         else: 
+#             pid.speed = 15
 
-	x = cte / self.x_ratio
-	y = 240 / self.y_ratio
+#     def drive(self, cte, Speed):
 
-	theta = atan2(points[0], points[1])
-        steering = -atan2((2*sin(theta)), self.lfd)
+#         x = cte / self.x_ratio
+#         y = 240 / self.y_ratio
 
-        msg = xycar_motor()
-        msg.angle = Angle
-        msg.speed = Speed
-        self.pub.publish(msg)
+#         theta = atan2(points[0], points[1])
+#         steering = -atan2((2*sin(theta)), self.lfd)
+
+#         msg = xycar_motor()
+#         msg.angle = Angle
+#         msg.speed = Speed
+#         self.pub.publish(msg)
 
 
 
