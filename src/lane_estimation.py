@@ -16,80 +16,64 @@ nwindows = 9
 margin = 12
 minpix = 5
 lane_bin_th = 145
-
 Width = 640
 Height = 480
 
-def lane_estimation(image_binary):
-    cte, curve = get_mid_poly(image_binary)
-    return cte,curve
+def find_point(f_array, start, mode):
+    stack = 0
+    if mode == "right":
+        while start < 500:
+            if f_array[start] == 0:
+                stack = 0
+            else:
+                stack += 1
+                if stack >= 5:
+                    return start-10
+            start += 1
+        return None
+
+    if mode == "left":
+        while start > 0:
+            if f_array[start] == 0:
+                stack = 0
+            else:
+                stack += 1
+                if stack >= 5:
+                    return start+10
+            start -= 1
+        return None
+
+class estimation:
+
+    def __init__(self):
+        self.mid = 250
+        self.right_point = None
+        self.left_point = None
+        self.prev_right_point = None
+        self.prev_left_point = None
+
+    def get_mid_poly(self, img, is_ver, is_show=False):
+        f_array = img[125, :]
+        self.left_point = find_point(f_array, self.mid, "left")
+        if self.left_point == None:
+            self.left_point = self.prev_left_point
+        self.right_point = find_point(f_array, self.mid, "right")
+        if self.right_point == None:
+            self.right_point = self.prev_right_point
+        
+        self.mid = int((self.left_point + self.right_point)/2)
+
+        if is_ver:
+            if abs(self.right_point - self.left_point) < 100:
+                if self.mid < 250:
+                    self.mid = self.right_point - 50
+                else:
+                    self.mid = self.left_point + 50
+        
+        if is_show:
+            img = cv2.line(img, (self.mid,125), (self.mid,125), 255, 5)
+            cv2.imshow("gray", img)
+
+        return -(250 - self.mid)
 
 
-def get_mid_poly(img):
-    global nwindows
-    global margin
-    global minpix
-    global lane_bin_th
-
-    blur = cv2.GaussianBlur(img,(5, 5), 0)
-    _, L, _ = cv2.split(cv2.cvtColor(blur, cv2.COLOR_BGR2HLS))
-    _, lane = cv2.threshold(L, lane_bin_th, 255, cv2.THRESH_BINARY)
-
-    histogram = np.sum(lane[lane.shape[0]//2:,:], axis=0)      
-    midpoint = np.int(histogram.shape[0]/2)
-    leftx_current = np.argmax(histogram[:midpoint])
-    rightx_current = np.argmax(histogram[midpoint:]) + midpoint
-
-    # todo : left/right lane이 보이지 않을때도 고려해야함
-
-    window_height = np.int(lane.shape[0]/nwindows)
-    nz = lane.nonzero()
-
-    left_lane_inds = []
-    right_lane_inds = []
-    
-    mx, my= [], []
-
-    out_img = np.dstack((lane, lane, lane))*255
-
-    for window in range(nwindows):
-
-        win_yl = lane.shape[0] - (window+1)*window_height
-        win_yh = lane.shape[0] - window*window_height
-
-        win_xll = leftx_current - margin
-        win_xlh = leftx_current + margin
-        win_xrl = rightx_current - margin
-        win_xrh = rightx_current + margin
-
-        good_left_inds = ((nz[0] >= win_yl)&(nz[0] < win_yh)&(nz[1] >= win_xll)&(nz[1] < win_xlh)).nonzero()[0]
-        good_right_inds = ((nz[0] >= win_yl)&(nz[0] < win_yh)&(nz[1] >= win_xrl)&(nz[1] < win_xrh)).nonzero()[0]
-
-        left_lane_inds.append(good_left_inds)
-        right_lane_inds.append(good_right_inds)
-
-        if len(good_left_inds) > minpix:
-            leftx_current = np.int(np.mean(nz[1][good_left_inds]))
-        if len(good_right_inds) > minpix:        
-            rightx_current = np.int(np.mean(nz[1][good_right_inds]))
-
-        mx.append((leftx_current+rightx_current)/2)
-        my.append((win_yl + win_yh)/2)
-
-
-
-    left_lane_inds = np.concatenate(left_lane_inds)
-    right_lane_inds = np.concatenate(right_lane_inds)
-
-    #left_fit = np.polyfit(nz[0][left_lane_inds], nz[1][left_lane_inds], 2)
-    #right_fit = np.polyfit(nz[0][right_lane_inds] , nz[1][right_lane_inds], 2)
-
-    mfit = np.polyfit(np.array(my), np.array(mx),2)
-    cte = mx[nwindows//2]/2-(Width/2)
-
-    out_img[nz[0][left_lane_inds], nz[1][left_lane_inds]] = [255, 0, 0]
-    out_img[nz[0][right_lane_inds] , nz[1][right_lane_inds]] = [0, 0, 255]
-    cv2.imshow("viewer", out_img)
-    
-    
-    return cte, mfit
